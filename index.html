@@ -1,74 +1,130 @@
 <!doctype html>
 <html>
+
 <head>
-  <meta charset="utf-8" />
-  <title>Memories as Flowers — Map</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <style>
-    body, html { height: 100%; margin: 0; font-family: Arial, sans-serif; }
-    #map { height: 100%; }
-    .popup-form { display:flex; flex-direction:column; gap:6px; }
-    .popup-form input, .popup-form textarea { width: 220px; padding:6px; font-size:14px; }
-    .popup-form button { padding:6px; cursor:pointer; }
-    .topbar { position: absolute; left: 10px; top: 10px; z-index: 1000; background: rgba(255,255,255,0.95); padding:8px 10px; border-radius:6px; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
-  </style>
+    <meta charset="utf-8" />
+    <title>Memories as Flowers — Map</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            height: 100%;
+        }
+
+        .popup-form {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .popup-form input,
+        .popup-form textarea {
+            width: 220px;
+            padding: 6px;
+            font-size: 14px;
+        }
+
+        .popup-form button {
+            padding: 6px;
+            cursor: pointer;
+        }
+
+        .topbar {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 10px;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+    </style>
 </head>
+
 <body>
-  <div class="topbar">Click anywhere on the map to add a memory 🌸</div>
-  <div id="map"></div>
+    <div class="topbar">Click anywhere on the map to add a memory 🌸</div>
+    <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    const API_URL = "YOUR_APPS_SCRIPT_URL"; // <-- replace with your Apps Script web app URL
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzTJmlE2i-c2JVbJYfjlrMHsvasm1URFfVPYH7NqtXKRapfgLp0JvuoWXu9kapEhlSXtg/exec"; // <-- replace with your Apps Script web app URL
 
-    // Initialize map
-    const map = L.map('map').setView([20, 0], 2);
+        // Initialize map
+        const map = L.map('map').setView([20, 0], 2);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
-    // Simple flower icon using emoji inside DivIcon
-    const flowerIcon = L.divIcon({
-      html: '<div style="font-size:24px; transform: translate(-50%, -100%);">🌸</div>',
-      iconSize: [24,24],
-      className: ''
-    });
-
-    // Load existing memories from sheet
-    async function loadMemories() {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        // data is array of objects with keys: timestamp, lat, lng, title, body
-        data.forEach(mem => {
-          const lat = parseFloat(mem.lat);
-          const lng = parseFloat(mem.lng);
-          if (isNaN(lat) || isNaN(lng)) return;
-          const marker = L.marker([lat, lng], { icon: flowerIcon }).addTo(map);
-          const created = mem.timestamp ? new Date(mem.timestamp).toLocaleString() : '';
-          marker.bindPopup(`<b>${escapeHtml(mem.title || '')}</b><br/><small style="color:#666">${created}</small><p>${escapeHtml(mem.body || '')}</p>`);
+        // Simple flower icon using emoji inside DivIcon
+        const flowerIcon = L.divIcon({
+            html: '<div style="font-size:24px; transform: translate(-50%, -100%);">🌸</div>',
+            iconSize: [24, 24],
+            className: ''
         });
-      } catch (err) {
-        console.error("Failed to load memories:", err);
-      }
-    }
 
-    // Escape HTML to prevent injection
-    function escapeHtml(s) {
-      if (!s) return '';
-      return String(s).replace(/[&<>"']/g, function(m) {
-        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
-      });
-    }
+        // Load existing memories from sheet
+        async function loadMemories() {
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
 
-    // Click behavior: open a small popup form with coords prefilled
-    map.on('click', function(e) {
-      const lat = e.latlng.lat.toFixed(6);
-      const lng = e.latlng.lng.toFixed(6);
-      const formHtml = `
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+
+                const data = await res.json();
+
+                // Check if data is an array
+                if (!Array.isArray(data)) {
+                    console.warn("API returned non-array data:", data);
+                    return;
+                }
+
+                // data is array of objects with keys: timestamp, lat, lng, title, body
+                data.forEach(mem => {
+                    const lat = parseFloat(mem.lat);
+                    const lng = parseFloat(mem.lng);
+                    if (isNaN(lat) || isNaN(lng)) return;
+                    const marker = L.marker([lat, lng], { icon: flowerIcon }).addTo(map);
+                    const created = mem.timestamp ? new Date(mem.timestamp).toLocaleString() : '';
+                    marker.bindPopup(`<b>${escapeHtml(mem.title || '')}</b><br/><small style="color:#666">${created}</small><p>${escapeHtml(mem.body || '')}</p>`);
+                });
+            } catch (err) {
+                console.error("Failed to load memories:", err);
+                if (err.name === 'TypeError' && err.message.includes('CORS')) {
+                    console.error("CORS error: Make sure your Google Apps Script is deployed as a web app with 'Anyone' access");
+                }
+            }
+        }
+
+        // Escape HTML to prevent injection
+        function escapeHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/[&<>"']/g, function (m) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+            });
+        }
+
+        // Click behavior: open a small popup form with coords prefilled
+        map.on('click', function (e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+            const formHtml = `
         <div class="popup-form">
           <input id="m-title" placeholder="Title (short)" maxlength="100" />
           <textarea id="m-body" placeholder="Write your memory (a sentence or two)" rows="3" maxlength="500"></textarea>
@@ -83,52 +139,69 @@
           <div id="m-status" style="font-size:12px;color:#333;"></div>
         </div>
       `;
-      const popup = L.popup()
-        .setLatLng(e.latlng)
-        .setContent(formHtml)
-        .openOn(map);
+            const popup = L.popup()
+                .setLatLng(e.latlng)
+                .setContent(formHtml)
+                .openOn(map);
 
-      setTimeout(() => {
-        const btn = document.getElementById('m-submit');
-        const cancel = document.getElementById('m-cancel');
-        const status = document.getElementById('m-status');
-        btn.onclick = async () => {
-          const title = document.getElementById('m-title').value.trim();
-          const body = document.getElementById('m-body').value.trim();
-          const latVal = document.getElementById('m-lat').value;
-          const lngVal = document.getElementById('m-lng').value;
-          if (!latVal || !lngVal) { status.textContent = 'Coordinates missing.'; return; }
-          // POST to API
-          status.textContent = 'Saving...';
-          try {
-            const payload = { lat: latVal, lng: lngVal, title, body };
-            const res = await fetch(API_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-            const result = await res.json();
-            if (result && result.success) {
-              status.textContent = 'Saved!';
-              // add marker immediately
-              const marker = L.marker([parseFloat(latVal), parseFloat(lngVal)], { icon: flowerIcon }).addTo(map);
-              marker.bindPopup(`<b>${escapeHtml(title)}</b><p>${escapeHtml(body)}</p>`);
+            setTimeout(() => {
+                const btn = document.getElementById('m-submit');
+                const cancel = document.getElementById('m-cancel');
+                const status = document.getElementById('m-status');
+                btn.onclick = async () => {
+                    const title = document.getElementById('m-title').value.trim();
+                    const body = document.getElementById('m-body').value.trim();
+                    const latVal = document.getElementById('m-lat').value;
+                    const lngVal = document.getElementById('m-lng').value;
+                    if (!latVal || !lngVal) { status.textContent = 'Coordinates missing.'; return; }
+                    // POST to API
+                    status.textContent = 'Saving...';
+                    try {
+                        const payload = { lat: latVal, lng: lngVal, title, body };
+                        // Use form-encoded body to avoid CORS preflight (Apps Script doesn't handle OPTIONS)
+                        const formBody = new URLSearchParams();
+                        Object.entries(payload).forEach(([k, v]) => formBody.append(k, String(v || '')));
 
-              setTimeout(() => map.closePopup(), 800);
-            } else {
-              status.textContent = 'Save failed: ' + (result.error || JSON.stringify(result));
-            }
-          } catch (err) {
-            console.error(err);
-            status.textContent = 'Network error (see console).';
-          }
-        };
-        cancel.onclick = () => map.closePopup();
-      }, 50);
-    });
+                        const res = await fetch(API_URL, {
+                            method: 'POST',
+                            mode: 'cors',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                            },
+                            body: formBody.toString()
+                        });
 
-    // initial load
-    loadMemories();
-  </script>
+                        if (!res.ok) {
+                            throw new Error(`HTTP error! status: ${res.status}`);
+                        }
+
+                        const result = await res.json();
+                        if (result && result.success) {
+                            status.textContent = 'Saved!';
+                            // add marker immediately
+                            const marker = L.marker([parseFloat(latVal), parseFloat(lngVal)], { icon: flowerIcon }).addTo(map);
+                            marker.bindPopup(`<b>${escapeHtml(title)}</b><p>${escapeHtml(body)}</p>`);
+
+                            setTimeout(() => map.closePopup(), 800);
+                        } else {
+                            status.textContent = 'Save failed: ' + (result.error || JSON.stringify(result));
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        if (err.name === 'TypeError' && err.message.includes('CORS')) {
+                            status.textContent = 'CORS error - check console for details';
+                        } else {
+                            status.textContent = 'Network error (see console).';
+                        }
+                    }
+                };
+                cancel.onclick = () => map.closePopup();
+            }, 50);
+        });
+
+        // initial load
+        loadMemories();
+    </script>
 </body>
+
 </html>
