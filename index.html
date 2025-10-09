@@ -76,10 +76,11 @@
         async function loadMemories() {
             try {
                 const res = await fetch(API_URL, {
+                    redirect: "follow",
                     method: 'GET',
                     mode: 'cors',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'text/plain;charset=utf-8',
                     }
                 });
 
