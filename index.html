@@ -68,11 +68,13 @@
         }).addTo(map);
 
         // Simple flower icon using emoji inside DivIcon
-        const flowerIcon = L.divIcon({
-            html: '<div style="font-size:24px; transform: translate(-0%, -25%);">🌸</div>',
-            iconSize: [24, 24],
-            className: ''
-        });
+        function getIcon(opacity, icon) {
+            return L.divIcon({
+                html: `<div style="font-size:24px; transform: translate(-0%, -25%); opacity: ${opacity};">${icon}</div>`,
+                iconSize: [24, 24],
+                className: ''
+            });
+        }
 
         // Load existing memories from sheet
         async function loadMemories() {
@@ -98,12 +100,12 @@
                     return;
                 }
 
-                // data is array of objects with keys: timestamp, lat, lng, title, body
+                // data is array of objects with keys: timestamp, lat, lng, title, body, icon, opacity
                 data.forEach(mem => {
                     const lat = parseFloat(mem.lat);
                     const lng = parseFloat(mem.lng);
                     if (isNaN(lat) || isNaN(lng)) return;
-                    const marker = L.marker([lat, lng], { icon: flowerIcon }).addTo(map);
+                    const marker = L.marker([lat, lng], { icon: getIcon(mem.opacity, mem.icon) }).addTo(map);
                     const created = mem.timestamp ? new Date(mem.timestamp).toLocaleString() : '';
                     marker.bindPopup(`<b>${escapeHtml(mem.title || '')}</b><br/><small style="color:#666">${created}</small><p>${escapeHtml(mem.body || '')}</p>`);
                 });
