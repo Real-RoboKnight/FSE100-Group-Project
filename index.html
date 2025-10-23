@@ -68,13 +68,20 @@
         }).addTo(map);
 
         // Simple flower icon using emoji inside DivIcon
-        function getIcon(opacity, icon) {
+        function getOpacity(timestamp) {
+            const delta_time = new Date() - timestamp;
+            console.log(delta_time);
+            return 1 - delta_time / 3628000000  //50% in 3 weeks
+        }
+
+        function getIcon(timestamp, icon) {
             return L.divIcon({
-                html: `<div style="font-size:24px; transform: translate(-0%, -25%); opacity: ${opacity};">${icon}</div>`,
+                html: `<div style="font-size:24px; transform: translate(-0%, -25%); opacity: ${getOpacity(timestamp)};">${icon}</div>`,
                 iconSize: [24, 24],
                 className: ''
             });
         }
+
 
         // Load existing memories from sheet
         async function loadMemories() {
@@ -105,7 +112,7 @@
                     const lat = parseFloat(mem.lat);
                     const lng = parseFloat(mem.lng);
                     if (isNaN(lat) || isNaN(lng)) return;
-                    const marker = L.marker([lat, lng], { icon: getIcon(mem.opacity, mem.icon) }).addTo(map);
+                    const marker = L.marker([lat, lng], { icon: getIcon(new Date(mem.timestamp), mem.icon) }).addTo(map);
                     const created = mem.timestamp ? new Date(mem.timestamp).toLocaleString() : '';
                     marker.bindPopup(`<b>${escapeHtml(mem.title || '')}</b><br/><small style="color:#666">${created}</small><p>${escapeHtml(mem.body || '')}</p>`);
                 });
@@ -158,11 +165,12 @@
                     const body = document.getElementById('m-body').value.trim();
                     const latVal = document.getElementById('m-lat').value;
                     const lngVal = document.getElementById('m-lng').value;
+                    const icon = "🌼"
                     if (!latVal || !lngVal) { status.textContent = 'Coordinates missing.'; return; }
                     // POST to API
                     status.textContent = 'Saving...';
                     try {
-                        const payload = { lat: latVal, lng: lngVal, title, body };
+                        const payload = { lat: latVal, lng: lngVal, title, body, icon };
                         // Use form-encoded body to avoid CORS preflight (Apps Script doesn't handle OPTIONS)
                         const formBody = new URLSearchParams();
                         Object.entries(payload).forEach(([k, v]) => formBody.append(k, String(v || '')));
@@ -184,7 +192,7 @@
                         if (result && result.success) {
                             status.textContent = 'Saved!';
                             // add marker immediately
-                            const marker = L.marker([parseFloat(latVal), parseFloat(lngVal)], { icon: flowerIcon }).addTo(map);
+                            const marker = L.marker([parseFloat(latVal), parseFloat(lngVal)], { icon: getIcon(new Date(), icon) }).addTo(map);
                             marker.bindPopup(`<b>${escapeHtml(title)}</b><p>${escapeHtml(body)}</p>`);
 
                             setTimeout(() => map.closePopup(), 800);
