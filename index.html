@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name=description>A site to store memories</meta>
     <title>Memories as Flowers — Map</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -140,7 +141,8 @@
                 html: `<img 
                     style="transform: translate(-0%, -25%); opacity: ${getOpacity(timestamp)};" 
                     height=28px
-                    src="${icon}.small.png" />`,
+                    src="${icon}.small.png" 
+                    alt="memory"/>`,
                 iconSize: [24, 24],
                 className: ''
             });
