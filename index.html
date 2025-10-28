@@ -48,15 +48,61 @@
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
         }
 
-        .attribution {
-            position: absolute;
-            left: 10px;
-            bottom: 10px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 8px 10px;
+        /* Image dropdown for popup */
+        .image-dropdown {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .image-select {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            padding: 6px 8px;
             border-radius: 6px;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            background: #fff;
+        }
+
+        .image-select img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .image-options {
+            display: none;
+            margin-top: 6px;
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 6px;
+            border-radius: 6px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            white-space: nowrap;
+            overflow-x: scroll;
+            max-width: 100%;
+        }
+
+        .image-option {
+            display: inline-block;
+            margin-right: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            padding: 4px;
+        }
+
+        .image-option img {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .image-option.selected {
+            outline: 3px solid #007bff;
         }
     </style>
 </head>
@@ -94,7 +140,7 @@
                 html: `<img 
                     style="transform: translate(-0%, -25%); opacity: ${getOpacity(timestamp)};" 
                     height=28px
-                    src="${icon}.png" />`,
+                    src="${icon}" />`,
                 iconSize: [24, 24],
                 className: ''
             });
@@ -157,6 +203,20 @@
             const formHtml = `
         <div class="popup-form">
           <input id="m-title" placeholder="Title (short)" maxlength="100" />
+          <div class="image-dropdown">
+            <div class="image-select" id="image-select">
+              <img id="image-select-preview" src="1.png" alt="selected" />
+              <span id="image-select-label">Choose image</span>
+            </div>
+            <div class="image-options" id="image-options">
+              <div class="image-option" data-value="1.png"><img src="1.png" alt="1"/></div>
+              <div class="image-option" data-value="2.png"><img src="2.png" alt="2"/></div>
+              <div class="image-option" data-value="3.png"><img src="3.png" alt="3"/></div>
+              <div class="image-option" data-value="4.png"><img src="4.png" alt="4"/></div>
+              <div class="image-option" data-value="5.png"><img src="5.png" alt="5"/></div>
+            </div>
+            <input type="hidden" id="m-icon" value="1.png" />
+          </div>
           <textarea id="m-body" placeholder="Write your memory (a sentence or two)" rows="3" maxlength="500"></textarea>
           <div style="display:flex; gap:6px;">
             <input id="m-lat" value="${lat}" style="width:100px;" />
@@ -178,12 +238,36 @@
                 const btn = document.getElementById('m-submit');
                 const cancel = document.getElementById('m-cancel');
                 const status = document.getElementById('m-status');
+                // wire image dropdown behavior inside popup
+                try {
+                    const sel = document.getElementById('image-select');
+                    const opts = document.getElementById('image-options');
+                    const preview = document.getElementById('image-select-preview');
+                    const hidden = document.getElementById('m-icon');
+                    if (sel && opts && hidden) {
+                        sel.addEventListener('click', (ev) => { ev.stopPropagation(); opts.style.display = opts.style.display === 'block' ? 'none' : 'block'; });
+                        opts.querySelectorAll('.image-option').forEach(o => {
+                            o.addEventListener('click', (ev) => {
+                                ev.stopPropagation();
+                                opts.querySelectorAll('.image-option').forEach(x => x.classList.remove('selected'));
+                                o.classList.add('selected');
+                                const v = o.dataset.value;
+                                hidden.value = v;
+                                if (preview) preview.src = v;
+                                opts.style.display = 'none';
+                            });
+                        });
+                        // close options if clicking outside popup
+                        document.addEventListener('click', function docClose(e) { if (!opts.contains(e.target) && !sel.contains(e.target)) { opts.style.display = 'none'; document.removeEventListener('click', docClose); } });
+                    }
+                } catch (wireErr) { console.error('image dropdown wiring failed', wireErr); }
+
                 btn.onclick = async () => {
                     const title = document.getElementById('m-title').value.trim();
                     const body = document.getElementById('m-body').value.trim();
                     const latVal = document.getElementById('m-lat').value;
                     const lngVal = document.getElementById('m-lng').value;
-                    const icon = "🌼"
+                    const icon = document.getElementById("m-icon").value;
                     if (!latVal || !lngVal) { status.textContent = 'Coordinates missing.'; return; }
                     // POST to API
                     status.textContent = 'Saving...';
