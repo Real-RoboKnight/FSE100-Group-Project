@@ -129,7 +129,10 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbzTJmlE2i-c2JVbJYfjlrMHsvasm1URFfVPYH7NqtXKRapfgLp0JvuoWXu9kapEhlSXtg/exec"; // <-- replace with your Apps Script web app URL
 
         // Initialize map
-        const map = L.map('map').setView([20, 0], 2);
+        const map = L.map('map', {
+            maxBounds: [[-90, 200], [90, -200]],
+            maxBoundsViscosity: 1.0
+        }).setView([20, 0], 2);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19,
             minZoom: 3,
