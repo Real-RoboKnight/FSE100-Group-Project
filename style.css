@@ -1,0 +1,110 @@
+body,
+html {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.intro {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px 10px;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    width: 50%;
+}
+
+#map {
+    height: 100%;
+}
+
+.popup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.popup-form input,
+.popup-form textarea {
+    width: 220px;
+    padding: 6px;
+    font-size: 14px;
+}
+
+.popup-form button {
+    padding: 6px;
+    cursor: pointer;
+}
+
+.topbar {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+    top: 10px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px 10px;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Image dropdown for popup */
+.image-dropdown {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.image-select {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.image-select img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.image-options {
+    display: none;
+    margin-top: 6px;
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 6px;
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    white-space: nowrap;
+    overflow-x: scroll;
+    max-width: 100%;
+}
+
+.image-option {
+    display: inline-block;
+    margin-right: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.image-option img {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    display: block;
+}
+
+.image-option.selected {
+    outline: 3px solid #007bff;
+}
