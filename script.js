@@ -24,7 +24,7 @@ function getIcon(timestamp, icon) {
         html: `<img
         style="transform: translate(-0%, -25%); opacity: ${getOpacity(timestamp)};"
         height=28px
-    src="${icon}.small.png" 
+    src="images/${icon}.small.png" 
                     alt="memory"/>`,
         iconSize: [24, 24],
         className: ''
@@ -91,16 +91,16 @@ map.on('click', function (e) {
             <input id="m-title" placeholder="Title (short)" maxlength="100" />
             <div class="image-dropdown">
                 <div class="image-select" id="image-select">
-                    <img id="image-select-preview" src="1.large.png" alt="selected" />
+                    <img id="image-select-preview" src="images/1.large.png" alt="selected" />
                     <span id="image-select-label">Choose image</span>
                 </div>
                 <div class="image-options" id="image-options">
-                    <div class="image-option" data-value="1"><img src="1.large.png" alt="1" /></div>
-                    <div class="image-option" data-value="2"><img src="2.large.png" alt="2" /></div>
-                    <div class="image-option" data-value="3"><img src="3.large.png" alt="3" /></div>
-                    <div class="image-option" data-value="4"><img src="4.large.png" alt="4" /></div>
-                    <div class="image-option" data-value="5"><img src="5.large.png" alt="5" /></div>
-                    <div class="image-option" data-value="6"><img src="6.large.png" alt="6" /></div>
+                    <div class="image-option" data-value="1"><img src="images/1.large.png" alt="1" /></div>
+                    <div class="image-option" data-value="2"><img src="images/2.large.png" alt="2" /></div>
+                    <div class="image-option" data-value="3"><img src="images/3.large.png" alt="3" /></div>
+                    <div class="image-option" data-value="4"><img src="images/4.large.png" alt="4" /></div>
+                    <div class="image-option" data-value="5"><img src="images/5.large.png" alt="5" /></div>
+                    <div class="image-option" data-value="6"><img src="images/6.large.png" alt="6" /></div>
                 </div>
                 <input type="hidden" id="m-icon" value="1.png" />
             </div>
@@ -140,7 +140,7 @@ map.on('click', function (e) {
                         o.classList.add('selected');
                         const v = o.dataset.value;
                         hidden.value = v;
-                        if (preview) preview.src = v + ".large.png";
+                        if (preview) preview.src = "images/" + v + ".large.png";
                         opts.style.display = 'none';
                     });
                 });
