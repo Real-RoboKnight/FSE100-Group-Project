@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzTJmlE2i-c2JVbJYfjlrMHsvasm1URFfVPYH7NqtXKRapfgLp0JvuoWXu9kapEhlSXtg/exec"; // <-- replace with your Apps Script web app URL
+const API_URL = "https://script.google.com/macros/s/AKfycbzYocfqO5ocGt05Zqq9TITwjDVhL_yGQ5feFBGcjVIbP7puAb6drbVOh3jvkFueJfBscw/exec"; // <-- replace with your Apps Script web app URL
 
 // Initialize map
 const map = L.map('map', {
@@ -30,6 +30,87 @@ function getIcon(timestamp, icon) {
     });
 }
 
+// Create HTML for a marker popup including a "Water" button
+function makePopupHtml(title, body, uuid) {
+    const safeTitle = escapeHtml(title || '');
+    const safeBody = escapeHtml(body || '');
+    const id = escapeHtml(String(uuid || ''));
+    return `
+        <div class="memory-popup">
+            <b>${safeTitle}</b>
+            <div style="font-size:12px;color:#666;margin-bottom:6px;">${id ? new Date(id).toLocaleString() : ''}</div>
+            <p>${safeBody}</p>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+                <button class="water-btn" data-uuid="${id}">Water 🌧️</button>
+                <span class="water-status" style="font-size:12px;color:#666;margin-left:6px;"></span>
+            </div>
+        </div>
+    `;
+}
+
+// Send a "water" update to the server by POSTing the uuid. Server will update lastupdated.
+async function sendWater(uuid) {
+    const payload = { uuid };
+    const formBody = new URLSearchParams();
+    Object.entries(payload).forEach(([k, v]) => formBody.append(k, String(v || '')));
+    const res = await fetch(API_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: formBody.toString()
+    });
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    return await res.json();
+}
+
+// When any popup opens, wire the Water button to call sendWater
+map.on('popupopen', function (e) {
+    try {
+        const popupEl = e.popup.getElement();
+        if (!popupEl) return;
+        const btn = popupEl.querySelector('.water-btn');
+        const statusSpan = popupEl.querySelector('.water-status');
+        if (!btn) return;
+        // avoid attaching multiple listeners
+        if (btn.__wired) return;
+        btn.__wired = true;
+        btn.addEventListener('click', async () => {
+            const uuid = btn.dataset.uuid;
+            if (!uuid) return;
+            btn.disabled = true;
+            if (statusSpan) statusSpan.textContent = 'Updating...';
+            try {
+                const result = await sendWater(uuid);
+                if (result && result.success) {
+                    if (statusSpan) statusSpan.textContent = 'Watered ✓';
+                    // Update marker icon to full opacity now that it was watered
+                    try {
+                        const marker = e.popup && e.popup._source ? e.popup._source : null;
+                        if (marker && marker.memoryIcon) {
+                            // set icon with current time -> opacity = 1
+                            marker.setIcon(getIcon(new Date(), marker.memoryIcon));
+                            marker.memoryLastWatered = new Date();
+                        }
+                    } catch (mErr) { console.error('Failed to update marker after water', mErr); }
+                    // Optionally refresh popup timestamp display
+                    const tsEl = popupEl.querySelector('.memory-popup div');
+                    if (tsEl) tsEl.textContent = new Date().toLocaleString();
+                } else {
+                    if (statusSpan) statusSpan.textContent = 'Failed';
+                    console.warn('Water failed', result);
+                }
+            } catch (err) {
+                console.error('Water request failed', err);
+                if (statusSpan) statusSpan.textContent = 'Network error';
+            } finally {
+                btn.disabled = false;
+                setTimeout(() => { if (statusSpan) statusSpan.textContent = ''; }, 2000);
+            }
+        });
+    } catch (err) {
+        console.error('popupopen handler error', err);
+    }
+});
 
 // Load existing memories from sheet
 async function loadMemories() {
@@ -55,14 +136,19 @@ async function loadMemories() {
             return;
         }
 
-        // data is array of objects with keys: timestamp, lat, lng, title, body, icon, opacity
+        // data is array of objects with keys: timestamp, lat, lng, title, body, icon, opacity, lastwatered
         data.forEach(mem => {
             const lat = parseFloat(mem.lat);
             const lng = parseFloat(mem.lng);
             if (isNaN(lat) || isNaN(lng)) return;
-            const marker = L.marker([lat, lng], { icon: getIcon(new Date(mem.timestamp), mem.icon) }).addTo(map);
             const created = mem.timestamp ? new Date(mem.timestamp).toLocaleString() : '';
-            marker.bindPopup(`<b>${escapeHtml(mem.title || '')}</b><br /><small style="color:#666">${created}</small><p>${escapeHtml(mem.body || '')}</p>`);
+            const popupHtml = makePopupHtml(mem.title, mem.body, mem.timestamp);
+            const marker = L.marker([lat, lng], { icon: getIcon(new Date(mem.lastwatered || mem.timestamp), mem.icon) }).addTo(map);
+            // store metadata on marker so popup handlers can access it
+            marker.memoryIcon = mem.icon;
+            marker.memoryUuid = mem.timestamp;
+            marker.memoryLastWatered = mem.lastwatered ? new Date(mem.lastwatered) : (mem.timestamp ? new Date(mem.timestamp) : new Date());
+            marker.bindPopup(popupHtml);
         });
     } catch (err) {
         console.error("Failed to load memories:", err);
@@ -180,8 +266,14 @@ map.on('click', function (e) {
                 if (result && result.success) {
                     status.textContent = 'Saved!';
                     // add marker immediately
-                    const marker = L.marker([parseFloat(latVal), parseFloat(lngVal)], { icon: getIcon(new Date(), icon) }).addTo(map);
-                    marker.bindPopup(`<b>${escapeHtml(title)}</b><p>${escapeHtml(body)}</p>`);
+                    // use server timestamp if present
+                    const serverTs = result.lastwatered || new Date().toISOString();
+                    const popupHtml = makePopupHtml(title, body, serverTs);
+                    const marker = L.marker([parseFloat(latVal), parseFloat(lngVal)], { icon: getIcon(new Date(serverTs), icon) }).addTo(map);
+                    marker.memoryIcon = icon;
+                    marker.memoryUuid = serverTs;
+                    marker.memoryLastWatered = serverTs ? new Date(serverTs) : new Date();
+                    marker.bindPopup(popupHtml);
 
                     setTimeout(() => map.closePopup(), 800);
                 } else {
