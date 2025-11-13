@@ -12,7 +12,6 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_M
 }).addTo(map);
 map.attributionControl.addAttribution('<a href="https://www.vecteezy.com/free-png/flower">Flower PNGs by Vecteezy</a>')
 
-// Simple flower icon using emoji inside DivIcon
 function getOpacity(timestamp) {
     const delta_time = new Date() - timestamp;
     console.log(delta_time);
@@ -24,7 +23,7 @@ function getIcon(timestamp, icon) {
         html: `<img
         style="transform: translate(-0%, -25%); opacity: ${getOpacity(timestamp)};"
         height=28px
-    src="images/${icon}.small.png" 
+        src="images/${icon}.small.png" 
                     alt="memory"/>`,
         iconSize: [24, 24],
         className: ''
