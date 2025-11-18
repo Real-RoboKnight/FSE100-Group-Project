@@ -219,7 +219,7 @@ map.on('click', function (e) {
                     <div class="image-option" data-value="5"><img src="images/5.large.png" alt="5" /></div>
                     <div class="image-option" data-value="6"><img src="images/6.large.png" alt="6" /></div>
                 </div>
-                <input type="hidden" id="m-icon" value="1.png" />
+                <input type="hidden" id="m-icon" value="1" />
             </div>
             <textarea id="m-body" placeholder="Write your memory (a sentence or two)" rows="3" maxlength="500"></textarea>
             <div style="display:flex; gap:6px;">
