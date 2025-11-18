@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzYocfqO5ocGt05Zqq9TITwjDVhL_yGQ5feFBGcjVIbP7puAb6drbVOh3jvkFueJfBscw/exec"; // <-- replace with your Apps Script web app URL
+const API_URL = "https://script.google.com/macros/s/AKfycbzBHk0eCECpVWemzmFbz88NoP2XX-DPdMnErq-2-BMsQ2_X6j0V2DFZs0nTEfHSnCHA7A/exec"; // <-- replace with your Apps Script web app URL
 
 // Initialize map
 const map = L.map('map', {
@@ -51,9 +51,10 @@ function makePopupHtml(title, body, uuid) {
 // Send a "water" update to the server by POSTing the uuid. Server will update lastupdated.
 async function sendWater(uuid) {
     const payload = { uuid };
+    const user = (new URLSearchParams(window.location.search)).get("user") ?? "Default";
     const formBody = new URLSearchParams();
     Object.entries(payload).forEach(([k, v]) => formBody.append(k, String(v || '')));
-    const res = await fetch(API_URL, {
+    const res = await fetch(API_URL + "?sheet=" + user, {
         method: 'POST',
         mode: 'cors',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
@@ -62,6 +63,35 @@ async function sendWater(uuid) {
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     return await res.json();
 }
+async function createUser() {
+    document.getElementById("intro").remove();
+
+    const payload = { "make_sheet": "make_sheet" };
+    const user = (new URLSearchParams(window.location.search)).get("user") ?? "Default";
+    const formBody = new URLSearchParams();
+    Object.entries(payload).forEach(([k, v]) => formBody.append(k, String(v || '')));
+    const res = await fetch(API_URL + "?sheet=" + user, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: formBody.toString()
+    });
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const sheet_code = await res.json();
+
+    // Get the current URL
+    const currentUrl = new URL(window.location.href);
+    const params = currentUrl.searchParams;
+    params.set('user', sheet_code);
+    currentUrl.search = params.toString();
+    const newUrl = currentUrl.toString();
+
+    // To update the browser's URL without a full page reload, use history.pushState or history.replaceState
+    // history.pushState(null, '', newUrl); // Adds a new entry to the browser history
+    window.location.assign(newUrl); // Replaces the current entry in the browser history]
+}
+
+
 
 // When any popup opens, wire the Water button to call sendWater
 map.on('popupopen', function (e) {
@@ -114,8 +144,10 @@ map.on('popupopen', function (e) {
 
 // Load existing memories from sheet
 async function loadMemories() {
+    const user = (new URLSearchParams(window.location.search)).get("user") ?? "Default";
+    console.log(user);
     try {
-        const res = await fetch(API_URL, {
+        const res = await fetch(API_URL + "?sheet=" + user, {
             redirect: "follow",
             method: 'GET',
             mode: 'cors',
@@ -235,6 +267,7 @@ map.on('click', function (e) {
         } catch (wireErr) { console.error('image dropdown wiring failed', wireErr); }
 
         btn.onclick = async () => {
+            const user = (new URLSearchParams(window.location.search)).get("user") ?? "Default";
             const title = document.getElementById('m-title').value.trim();
             const body = document.getElementById('m-body').value.trim();
             const latVal = document.getElementById('m-lat').value;
@@ -249,7 +282,7 @@ map.on('click', function (e) {
                 const formBody = new URLSearchParams();
                 Object.entries(payload).forEach(([k, v]) => formBody.append(k, String(v || '')));
 
-                const res = await fetch(API_URL, {
+                const res = await fetch(API_URL + "?sheet=" + user, {
                     method: 'POST',
                     mode: 'cors',
                     headers: {
