@@ -18,6 +18,14 @@ function getOpacity(timestamp) {
     return 1 - delta_time / 3628000000  //50% in 3 weeks
 }
 
+if ((new URLSearchParams(window.location.search)).get("i") === 'f') document.getElementById("intro").innerHTML = `
+    <h1>Welcome to Your Custom Flower Garden</h1>
+
+    <p>Please ensure you save/bookmark this URL to return to this map.</p>
+
+    <input type="button" onclick='document.getElementById("intro").remove()' value="Close" />
+    `;
+
 function getIcon(timestamp, icon) {
     return L.divIcon({
         html: `<img
@@ -64,7 +72,7 @@ async function sendWater(uuid) {
     return await res.json();
 }
 async function createUser() {
-    document.getElementById("intro").remove();
+    document.getElementById("createMap").value = "Loading ..."
 
     const payload = { "make_sheet": "make_sheet" };
     const user = (new URLSearchParams(window.location.search)).get("user") ?? "Default";
@@ -83,6 +91,7 @@ async function createUser() {
     const currentUrl = new URL(window.location.href);
     const params = currentUrl.searchParams;
     params.set('user', sheet_code);
+    params.set('i', 'f');
     currentUrl.search = params.toString();
     const newUrl = currentUrl.toString();
 

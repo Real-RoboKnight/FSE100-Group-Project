@@ -21,29 +21,33 @@
         <meta name=description>Click anywhere on the map to add a memory 🌸</meta>
     </div>
 
-    <div class="intro" id="intro">
-        <h1>Welcome to Our Flower Garden</h1>
-        <p>This is a place to gather your memories of joys lost — a quiet map where love, laughter, and longing can
-            bloom again.
-        </p>
-
-        <p>Click on any location to plant a memory on the map. Each memory becomes a flower — your story rooted in a
-            special
-            place.</p>
-
-        <p>🌸 <strong>How to begin:</strong></p>
-        <ul>
-            <li>Zoom and pan around the map to find a location that means something to you.</li>
-            <li>Click anywhere to add a memory — a thought, a name, or a few words from the heart.</li>
-            <li>Watch the garden grow as others share their memories too.</li>
-        </ul>
-
-        <p>Every flower here represents a story worth remembering. Take your time, and add yours when you’re ready.</p>
-        <input type="button" onclick='document.getElementById("intro").remove()' value="Close" />
-        <br\>
-            <p>You can also create your own custom map here:</p>
-            <input type="button" onclick='createUser()' value="" />
-    </div>
+    <div class="intro" id="intro" src="intro.html">
+        
+            <h1>Welcome to Our Flower Garden</h1>
+            <p>This is a place to gather your memories of joys lost — a quiet map where love, laughter, and longing can
+                bloom again.
+            </p>
+        
+            <p>Click on any location to plant a memory on the map. Each memory becomes a flower — your story rooted in a
+                special
+                place.</p>
+        
+            <p>🌸 <strong>How to begin:</strong></p>
+            <ul>
+                <li>Zoom and pan around the map to find a location that means something to you.</li>
+                <li>Click anywhere to add a memory — a thought, a name, or a few words from the heart.</li>
+                <li>Watch the garden grow as others share their memories too.</li>
+            </ul>
+        
+            <p>Every flower here represents a story worth remembering. Take your time, and add yours when you’re ready.</p>
+            <input type="button" onclick="document.getElementById(&quot;intro&quot;).remove()" value="Close">
+            <br\>
+                <p>You can also create your own custom map here:</p>
+                <input type="button" onclick="createUser()" value="Create Custom Map" id="createMap">
+        
+        
+            </br\>
+        </div>
 
     <div id="map"></div>
 
